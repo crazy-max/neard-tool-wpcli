@@ -1,7 +1,5 @@
 # Changelog
 
-### [Check compatibility with Neard](https://github.com/crazy-max/neard/wiki/toolWP-CLI#latest) before downloading.
-
 ## r2 (2016/10/11)
 
 * New bundle : 0.24.1
