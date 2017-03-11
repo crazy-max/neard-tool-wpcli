@@ -23,12 +23,17 @@
     <getmoduleuntouched name="${bundle.name}" version="${bundle.version}" propSrcDest="bundle.srcdest" propSrcFilename="bundle.srcfilename"/>
     <assertfile file="${bundle.srcdest}/${bundle.srcfilename}"/>
     
+    <!-- Temp copy -->
+    <copy todir="${bundle.srcdest}" overwrite="true">
+      <fileset dir="${bundle.path}" defaultexcludes="yes"/>
+    </copy>
+    
     <!-- Binaries -->
     <if>
-      <available file="${bundle.srcfinal}/bins.properties" type="file"/>
+      <available file="${bundle.srcdest}/bins.properties" type="file"/>
       <then>
-        <property prefix="wpcli" file="${bundle.srcfinal}/bins.properties"/>
-        <mkdir dir="${bundle.srcfinal}/bins"/>
+        <property prefix="wpcli" file="${bundle.srcdest}/bins.properties"/>
+        <mkdir dir="${bundle.srcdest}/bins"/>
         <!-- mysql -->
         <if>
           <isset property="wpcli.mysql"/>
@@ -37,7 +42,7 @@
             <basename property="mysql.filename" file="${wpcli.mysql}"/>
             <propertyregex property="mysql.basename" input="${mysql.filename}" regexp="(.*)\.(.*)" select="\1"/>
             <assertfile file="${mysql.dest}/${mysql.basename}/bin/mysql.exe"/>
-            <copy todir="${bundle.srcfinal}/bins" overwrite="true">
+            <copy todir="${bundle.srcdest}/bins" overwrite="true">
               <fileset dir="${mysql.dest}/${mysql.basename}/bin" includes="
                 mysql.exe,
                 mysqladmin.exe,
@@ -46,14 +51,15 @@
             </copy>
           </then>
         </if>
-        <delete file="${bundle.srcfinal}/bins.properties"/>
+        <delete file="${bundle.srcdest}/bins.properties"/>
       </then>
     </if>
     
     <delete dir="${bundle.tmp.prep.path}/${bundle.folder}"/>
     <mkdir dir="${bundle.tmp.prep.path}/${bundle.folder}"/>
-    <copy file="${bundle.srcdest}/${bundle.srcfilename}"
-      tofile="${bundle.tmp.prep.path}/${bundle.folder}/wp-cli.phar"/>
+    <copy todir="${bundle.tmp.prep.path}/${bundle.folder}" overwrite="true">
+      <fileset dir="${bundle.srcdest}"/>
+    </copy>
     <copy todir="${bundle.tmp.prep.path}/${bundle.folder}" overwrite="true">
       <fileset dir="${bundle.path}" defaultexcludes="yes" excludes="
         bins.properties"
