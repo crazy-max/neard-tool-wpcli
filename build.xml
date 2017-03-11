@@ -1,19 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="neard-tool-wpcli" basedir=".">
+  
+  <dirname property="project.basedir" file="${ant.file.neard-tool-wpcli}"/>
+  <property name="root.dir" location="${project.basedir}/.."/>
+  <property name="build.properties" value="${project.basedir}/build.properties"/>
+  <property file="${build.properties}"/>
+  
+  <!-- Neard dev -->
+  <property name="neard-dev.path" location="${root.dir}/neard-dev"/>
+  <fail unless="neard-dev.path" message="Project 'neard-dev' not found in ${neard-dev.path}"/>
+  <echo message="Neard dev found in ${neard-dev.path}" level="debug"/> 
+  
+  <!-- Import build-commons.xml -->
+  <import file="${neard-dev.path}/build/build-commons.xml"/>
+  <!-- Import build-bundle.xml -->
+  <import file="${neard-dev.path}/build/build-bundle.xml"/>
+  
+  <target name="release.build">
+    <basename property="bundle.folder" file="${bundle.path}"/>
+    <replaceproperty src="bundle.folder" dest="bundle.version" replace="${bundle.name}" with=""/>
     
-    <dirname property="project.basedir" file="${ant.file.neard-tool-wpcli}" />
-    <property name="root.dir" location="${project.basedir}/.." />
-    <property name="build.properties" value="${project.basedir}/build.properties" />
-    <property file="${build.properties}" />
+    <getmoduleuntouched name="${bundle.name}" version="${bundle.version}" propSrcDest="bundle.srcdest" propSrcFilename="bundle.srcfilename"/>
+    <assertfile file="${bundle.srcdest}/${bundle.srcfilename}"/>
     
-    <!-- Neard dev -->
-    <property name="neard-dev.path" location="${root.dir}/neard-dev" />
-    <fail unless="neard-dev.path" message="Project 'neard-dev' not found in ${neard-dev.path}" />
-    <echo message="Neard dev found in ${neard-dev.path}" level="debug" /> 
+    <!-- Binaries -->
+    <if>
+      <available file="${bundle.srcfinal}/bins.properties" type="file"/>
+      <then>
+        <property prefix="wpcli" file="${bundle.srcfinal}/bins.properties"/>
+        <mkdir dir="${bundle.srcfinal}/bins"/>
+        <!-- mysql -->
+        <if>
+          <isset property="wpcli.mysql"/>
+          <then>
+            <download url="${wpcli.mysql}" skipexisting="true" returnProperty="mysql.dest"/>
+            <basename property="mysql.filename" file="${wpcli.mysql}"/>
+            <propertyregex property="mysql.basename" input="${mysql.filename}" regexp="(.*)\.(.*)" select="\1"/>
+            <assertfile file="${mysql.dest}/${mysql.basename}/bin/mysql.exe"/>
+            <copy todir="${bundle.srcfinal}/bins" overwrite="true">
+              <fileset dir="${mysql.dest}/${mysql.basename}/bin" includes="
+                mysql.exe,
+                mysqladmin.exe,
+                mysqlcheck.exe
+              "/>
+            </copy>
+          </then>
+        </if>
+        <delete file="${bundle.srcfinal}/bins.properties"/>
+      </then>
+    </if>
     
-    <!-- Import build-commons.xml -->
-    <import file="${neard-dev.path}/build/build-commons.xml" />
-    <!-- Import build-bundle.xml -->
-    <import file="${neard-dev.path}/build/build-bundle.xml" />
-    
+    <delete dir="${bundle.tmp.prep.path}/${bundle.folder}"/>
+    <mkdir dir="${bundle.tmp.prep.path}/${bundle.folder}"/>
+    <copy file="${bundle.srcdest}/${bundle.srcfilename}"
+      tofile="${bundle.tmp.prep.path}/${bundle.folder}/wp-cli.phar"/>
+    <copy todir="${bundle.tmp.prep.path}/${bundle.folder}" overwrite="true">
+      <fileset dir="${bundle.path}" defaultexcludes="yes" excludes="
+        bins.properties"
+      />
+    </copy>
+  </target>
 </project>
